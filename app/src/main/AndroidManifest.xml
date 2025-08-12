@@ -16,7 +16,7 @@
         android:name=".App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/backup_rules"
-        android:label="AnchorWatch"
+        android:label="OpenAnchorWatch"
         android:icon="@mipmap/ic_launcher_new"
         android:roundIcon="@mipmap/ic_launcher_new_round"
         android:supportsRtl="true"
