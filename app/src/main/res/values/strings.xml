@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">OpenAnchorWatch</string>
+    <string name="set_anchor">Set anchor</string>
+    <string name="arm">Arm</string>
+    <string name="disarm">Disarm</string>
+    <string name="my_location">My location</string>
+    <string name="anchor_set_fmt">Anchor set • radius %1$d m</string>
+    <string name="armed">Armed</string>
+    <string name="disarmed">Disarmed</string>
+    <string name="ch_status">Status</string>
+    <string name="ch_alert">Alerts</string>
+    <string name="alarm_title">Anchor alarm</string>
+    <string name="notif_armed">Anchor watch armed</string>
+    <string name="notif_status_fmt">%1$d m / %2$d m</string>
+    <string name="alarm_outside_fmt">Outside safe radius (%1$d m)</string>
+    <string name="status">Status</string>
+</resources>

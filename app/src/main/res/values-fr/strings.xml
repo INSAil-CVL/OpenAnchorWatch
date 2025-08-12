@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">OpenAnchorWatch</string>
+    <string name="set_anchor">Placer l’ancre</string>
+    <string name="arm">Armer</string>
+    <string name="disarm">Désarmer</string>
+    <string name="my_location">Ma position</string>
+    <string name="anchor_set_fmt">Ancre posée • rayon %1$d m</string>
+    <string name="armed">Armé</string>
+    <string name="disarmed">Désarmé</string>
+    <string name="ch_status">Statut</string>
+    <string name="ch_alert">Alertes</string>
+    <string name="alarm_title">Alarme de mouillage</string>
+    <string name="notif_armed">Surveillance de mouillage activée</string>
+    <string name="notif_status_fmt">%1$d m / %2$d m</string>
+    <string name="alarm_outside_fmt">Hors du rayon de sécurité (%1$d m)</string>
+    <string name="status">Status</string>
+</resources>
