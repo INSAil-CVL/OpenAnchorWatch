@@ -22,6 +22,15 @@
     <string name="interval_fmt">MAJ: %1$ds</string>
     <string name="missing_location_permission">Autorisation de localisation manquante</string>
     <string name="circle_radius_fmt">Rayon du cercle : %1$d m</string>
+    <string name="lift_anchor">Relever l’ancre</string>
+    <string name="anchor_lifted">Ancre relevée</string>
+    <string name="toast_anchor_required">Pose d’ancre requise</string>
+    <string name="dialog_outside_title">Vous êtes hors du cercle de garde</string>
+    <string name="dialog_outside_message">Distance actuelle : %1$d m • Rayon de garde : %2$d m.\nArmer quand même ?</string>
+    <string name="arm_anyway">Armer quand même</string>
+    <string name="cancel">Annuler</string>
+    <string name="clip_label_coords">Coordonnées</string>
+    <string name="copied_coords_to_clipboard">Coordonnées copiées</string>
 
 
     <!-- Intervalle de mise à jour -->

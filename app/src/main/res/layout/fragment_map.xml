@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -20,6 +21,7 @@
         android:id="@+id/reticle"
         android:layout_width="28dp"
         android:layout_height="28dp"
+        android:importantForAccessibility="no"
         android:src="@drawable/ic_reticle"
         android:alpha="0.85"
         app:tint="@android:color/white"
@@ -237,6 +239,20 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- NOUVEAU : Relever l'ancre -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabLiftAnchor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/ic_clear_anchor"
+            app:tint="@android:color/white"
+            android:contentDescription="@string/lift_anchor"
+            android:layout_marginBottom="10dp"
+            app:elevation="0dp"
+            app:pressedTranslationZ="0dp"
+            android:stateListAnimator="@null"/>
+
+        <!-- Poser l'ancre -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabSetAnchor"
             android:layout_width="wrap_content"
@@ -244,16 +260,45 @@
             app:srcCompat="@drawable/ic_place_anchor"
             app:tint="@android:color/white"
             android:contentDescription="@string/set_anchor"
-            android:layout_marginBottom="10dp"/>
+            android:layout_marginBottom="10dp"
+            app:elevation="0dp"
+            app:pressedTranslationZ="0dp"
+            android:stateListAnimator="@null"/>
 
+        <!-- Ma position -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabMyLocation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_my_location"
             app:tint="@android:color/white"
-            android:contentDescription="@string/my_location"/>
+            android:contentDescription="@string/my_location"
+            app:elevation="0dp"
+            app:pressedTranslationZ="0dp"
+            android:stateListAnimator="@null"/>
     </LinearLayout>
+
+    <!-- Coordonnées du réticule (bas-centre) -->
+    <TextView
+        android:id="@+id/labelReticleCoords"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:textStyle="bold"
+        android:textSize="13sp"
+        android:fontFamily="monospace"
+        android:textColor="@android:color/white"
+        android:background="#66000000"
+        android:text="—"
+        app:layout_constraintBottom_toTopOf="@id/fabArmDisarm"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="8dp"
+        tools:ignore="HardcodedText" />
+
 
     <!-- E-FAB ARM / DISARM (centre bas) -->
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
@@ -266,5 +311,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        app:elevation="0dp"
+        app:pressedTranslationZ="0dp"
+        android:stateListAnimator="@null"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

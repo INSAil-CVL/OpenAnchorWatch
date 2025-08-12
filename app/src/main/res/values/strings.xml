@@ -22,6 +22,18 @@
     <string name="interval_fmt">Update: %1$ds</string>
     <string name="missing_location_permission">Missing location permission</string>
     <string name="circle_radius_fmt">Circle radius: %1$d m</string>
+    <string name="lift_anchor">Lift anchor</string>
+    <string name="anchor_lifted">Anchor lifted</string>
+    <string name="clip_label_coords">Coordinates</string>
+    <string name="copied_coords_to_clipboard">Coordinates copied</string>
+
+
+    <!-- Confirmations and alerts -->
+    <string name="toast_anchor_required">Set an anchor first</string>
+    <string name="dialog_outside_title">You are outside the guard circle</string>
+    <string name="dialog_outside_message">Current distance: %1$d m • Guard radius: %2$d m.\nArm anyway?</string>
+    <string name="arm_anyway">Arm anyway</string>
+    <string name="cancel">Cancel</string>
 
 
     <!-- Update interval -->

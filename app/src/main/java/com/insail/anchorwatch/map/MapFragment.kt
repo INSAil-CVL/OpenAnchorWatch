@@ -5,6 +5,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.widget.Toast
 import android.location.Location
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -67,6 +70,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var anchor: AnchorConfig? = null
     private var pendingRadiusMeters: Int = 60
     private var traceCollectorStarted = false
+    private var lastLat: Double? = null
+    private var lastLon: Double? = null
+
 
     private var receiverRegistered = false
 
@@ -76,7 +82,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val fusedCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val loc: Location = result.lastLocation ?: return
-            // Met à jour le point "moi" en continu, armé ou non
             setMe(loc.latitude, loc.longitude)
         }
     }
@@ -88,7 +93,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             val lon = intent.getDoubleExtra(AnchorWatchService.EXTRA_LON, Double.NaN)
             if (lat.isNaN() || lon.isNaN()) return
 
-            // MAJ "moi"
             setMe(lat, lon)
 
             if (!styleReady()) {
@@ -122,7 +126,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         private const val LYR_CIRCLE_LINE = "guard-circle-line"
 
         private const val SRC_SECTOR = "sector-src"
-        private const val LYR_SECTOR = "sector-fill"
 
         private const val SRC_TRACE = "trace-src"
         private const val LYR_TRACE = "trace-line"
@@ -139,8 +142,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
 
-        // Set anchor at camera center
+        // NOUVEAU : Relever l'ancre
+        binding.fabLiftAnchor.setOnClickListener {
+            liftAnchor()
+        }
+
+        // Poser l'ancre au centre de la caméra
         binding.fabSetAnchor.setOnClickListener {
+            // Demande : poser une nouvelle ancre doit supprimer le tracé
+            clearTraceUiAndDb()
+
             val center = mapLibreMap?.cameraPosition?.target ?: return@setOnClickListener
             val radius = pendingRadiusMeters.toFloat()
 
@@ -154,20 +165,56 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         binding.fabArmDisarm.setOnClickListener {
             if (Prefs.isArmed(requireContext())) {
+                // -> Désarmer
                 stopWatch(requireContext())
                 Prefs.setArmed(requireContext(), false)
                 binding.fabArmDisarm.setText(R.string.arm)
-                // On conserve le tracé à l'écran tant que l’utilisateur ne le nettoie pas
-            } else {
-                anchor?.let {
-                    startWatch(requireContext(), it)
-                    Prefs.setArmed(requireContext(), true)
-                    binding.fabArmDisarm.setText(R.string.disarm)
-                    refreshTraceOnce() // rejoue l’historique si existant
-                    startTraceCollectorIfReady()
+                return@setOnClickListener
+            }
+
+            // -> Armer
+            val a = anchor
+            if (a == null) {
+                // Pas d’ancre posée : Toast
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.toast_anchor_required), // voir strings plus bas
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+
+            // Si on a une position, vérifier si on est hors du cercle
+            val curLat = lastLat
+            val curLon = lastLon
+            if (curLat != null && curLon != null) {
+                val dist = distanceMeters(curLat, curLon, a.lat, a.lon)
+                if (dist > a.radiusMeters) {
+                    // Demander confirmation (Material)
+                    com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.dialog_outside_title)
+                        .setMessage(getString(R.string.dialog_outside_message, dist.toInt(), a.radiusMeters.toInt()))
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.arm_anyway) { _, _ ->
+                            startWatch(requireContext(), a)
+                            Prefs.setArmed(requireContext(), true)
+                            binding.fabArmDisarm.setText(R.string.disarm)
+                            refreshTraceOnce()
+                            startTraceCollectorIfReady()
+                        }
+                        .show()
+                    return@setOnClickListener
                 }
             }
+
+            // OK, on peut armer directement
+            startWatch(requireContext(), a)
+            Prefs.setArmed(requireContext(), true)
+            binding.fabArmDisarm.setText(R.string.disarm)
+            refreshTraceOnce()
+            startTraceCollectorIfReady()
         }
+
 
         // Radius slider
         binding.radiusSeek.apply {
@@ -184,7 +231,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
         binding.labelRadius.text = getString(R.string.circle_radius_fmt, pendingRadiusMeters)
 
-        // Update-interval slider (15..120s) — appliqué seulement en arrière-plan
+        // Intervalle (BG)
         binding.intervalSeek.max = 100
         fun mapToSeconds(p: Int) = 15 + (p * (120 - 15) / 100)
         val saved = Prefs.getIntervalSec(requireContext()) ?: 60
@@ -290,6 +337,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    @SuppressLint("DefaultLocale")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
@@ -297,6 +345,23 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             binding.statusBarSpacer.updateLayoutParams<ConstraintLayout.LayoutParams> { height = top }
             insets
         }
+        binding.labelReticleCoords.setOnLongClickListener {
+            val target = mapLibreMap?.cameraPosition?.target ?: return@setOnLongClickListener false
+
+            // Texte à copier : DMS + décimal
+            val dms = toDms(target.latitude, target.longitude)
+            val dec = String.format("%.5f, %.5f", target.latitude, target.longitude)
+            val text = "$dms ($dec)"
+
+            val cm = ContextCompat.getSystemService(
+                requireContext(), ClipboardManager::class.java
+            )
+            cm?.setPrimaryClip(ClipData.newPlainText(getString(R.string.clip_label_coords), text))
+
+            Toast.makeText(requireContext(), getString(R.string.copied_coords_to_clipboard), Toast.LENGTH_SHORT).show()
+            true
+        }
+
         collectTraceLive()
         collectTraceLiveBus()
     }
@@ -384,6 +449,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         // Caméra par défaut
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(48.0, -4.5), 18.5))
 
+        // Mettre à jour au relâchement (évite de spammer à chaque pixel)
+        map.addOnCameraIdleListener { updateReticleCoordsLabel() }
+
+        // Init une première fois
+        updateReticleCoordsLabel()
+
         refreshTraceOnce()
     }
 
@@ -411,6 +482,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         style.getSourceAs<GeoJsonSource>(SRC_SECTOR)?.setGeoJson(json)
     }
 
+    private fun clearGuardUi() {
+        val style = mapLibreMap?.style ?: return
+        style.getSourceAs<GeoJsonSource>(SRC_CIRCLE)?.setGeoJson(emptyFC())
+        style.getSourceAs<GeoJsonSource>(SRC_SECTOR)?.setGeoJson(emptyFC())
+    }
+
     private fun startTraceCollectorIfReady() {
         val styleReady = mapLibreMap?.style != null
         if (styleReady && !traceCollectorStarted) {
@@ -420,14 +497,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun refreshTraceOnce() {
-        val style = mapLibreMap?.style ?: return
+        mapLibreMap?.style ?: return
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val pts = com.insail.anchorwatch.data.AppDatabase
                 .get(requireContext())
                 .traceDao()
                 .latest(2000)
 
-            // seed in-memory list (oldest -> newest pour dessiner)
             liveTrace.clear()
             pts.reversed().forEach { p -> liveTrace.add(p.lat to p.lon) }
 
@@ -450,17 +526,17 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     .collect { pts ->
                         val style = mapLibreMap?.style ?: return@collect
 
-                        // Filet de sécurité / reprise depuis DB
                         if (pts.size >= 2) {
                             style.getSourceAs<GeoJsonSource>(SRC_TRACE)
                                 ?.setGeoJson(buildTraceLineStringJson(pts))
+                        } else {
+                            style.getSourceAs<GeoJsonSource>(SRC_TRACE)
+                                ?.setGeoJson(emptyFC())
                         }
 
-                        // Recalage mémoire
                         liveTrace.clear()
                         pts.reversed().forEach { p -> liveTrace.add(p.lat to p.lon) }
 
-                        // MAJ "moi"
                         pts.firstOrNull()?.let { last ->
                             setMe(last.lat, last.lon)
                         }
@@ -494,7 +570,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val src = style.getSourceAs<GeoJsonSource>(SRC_TRACE) ?: return
 
         if (liveTrace.size < 2) {
-            // pas assez de points pour une ligne visible
             src.setGeoJson(emptyFC())
             return
         }
@@ -509,14 +584,60 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     /** Point "moi" */
     private fun setMe(lat: Double, lon: Double) {
+        lastLat = lat
+        lastLon = lon
         val style = mapLibreMap?.style ?: return
         style.getSourceAs<GeoJsonSource>(SRC_ME)?.setGeoJson(
             """{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[$lon,$lat]}}]}"""
         )
     }
 
+
+    /** Actions ancre **/
+    private fun liftAnchor() {
+        // Désarme le service si nécessaire
+        if (Prefs.isArmed(requireContext())) {
+            stopWatch(requireContext())
+            Prefs.setArmed(requireContext(), false)
+            binding.fabArmDisarm.setText(R.string.arm)
+        }
+        // Oublie l'ancre courante (mémoire locale) et nettoie l'UI
+        anchor = null
+        clearGuardUi()
+        clearTraceUiAndDb()
+        binding.status.text = getString(R.string.anchor_lifted)
+    }
+
+    /** Nettoyage tracé (UI + DB + mémoire) */
+    private fun clearTraceUiAndDb() {
+        mapLibreMap?.style?.getSourceAs<GeoJsonSource>(SRC_TRACE)
+            ?.setGeoJson("""{"type":"FeatureCollection","features":[]}""")
+        liveTrace.clear()
+
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                com.insail.anchorwatch.data.AppDatabase
+                    .get(requireContext())
+                    .traceDao()
+                    .clearAll()
+            } catch (_: Exception) { /* no-op */ }
+        }
+    }
+
     /** GeoJSON helpers (string) */
     private fun emptyFC() = """{"type":"FeatureCollection","features":[]}"""
+
+    private fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6378137.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+        return r * c
+    }
+
 
     private fun circlePolygonJson(lat: Double, lon: Double, radiusMeters: Double, steps: Int = 90): String {
         val sb = StringBuilder()
@@ -547,7 +668,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val startDeg = headingDeg - sectorDeg / 2
         val endDeg = headingDeg + sectorDeg / 2
         val outer = arcPoints(lat, lon, outerM, startDeg, endDeg, steps)
-        val inner = arcPoints(lat, lon, innerM, endDeg, startDeg, steps) // sens inverse
+        val inner = arcPoints(lat, lon, innerM, endDeg, startDeg, steps)
         val ring = (outer + inner)
         val coords = ring.joinToString(",") { "[${it.second},${it.first}]" }
         return """{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[$coords]]}}]}"""
@@ -561,8 +682,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val end = endDeg.toDouble()
         val sweep = if (end >= start) end - start else (360 - start + end)
         val segments = (steps * (sweep / 360.0)).coerceAtLeast(2.0).toInt()
-        val R = 6_378_137.0
-        val d = rM / R
+        val r = 6_378_137.0
+        val d = rM / r
         val lat0 = Math.toRadians(lat); val lon0 = Math.toRadians(lon)
         for (i in 0..segments) {
             val bearing = Math.toRadians((start + sweep * i / segments))
@@ -645,12 +766,37 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         list != null && list.isNotEmpty()
     } catch (_: Exception) { false }
 
+    private fun updateReticleCoordsLabel() {
+        val target = mapLibreMap?.cameraPosition?.target ?: return
+        binding.labelReticleCoords.text = toDms(target.latitude, target.longitude)
+    }
+
+    private fun toDms(lat: Double, lon: Double): String {
+        @SuppressLint("DefaultLocale")
+        fun convert(value: Double, isLat: Boolean): String {
+            val hemisphere = when {
+                isLat && value >= 0 -> "N"
+                isLat && value < 0  -> "S"
+                !isLat && value >= 0 -> "E"
+                else -> "W"
+            }
+            val absValue = kotlin.math.abs(value)
+            val degrees = absValue.toInt()
+            val minutesFull = (absValue - degrees) * 60
+            val minutes = minutesFull.toInt()
+            val seconds = (minutesFull - minutes) * 60
+            return String.format("%d°%02d'%05.2f\" %s", degrees, minutes, seconds, hemisphere)
+        }
+
+        return "${convert(lat, true)}  ${convert(lon, false)}"
+    }
+
+
     // ------ Cycle de vie ------
     override fun onStart() {
         super.onStart()
         mapView.onStart()
 
-        // (Ré)enregistre le receiver
         if (!receiverRegistered) {
             ContextCompat.registerReceiver(
                 requireContext(),
@@ -661,30 +807,24 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             receiverRegistered = true
         }
 
-        // Démarre les updates Fused (1s) pour le point "moi" même désarmé
         startFusedUpdates()
     }
 
     override fun onResume() {
         super.onResume()
         mapView.onResume()
-        // 1s quand l'app est au premier plan (géré par le service)
         setServiceForeground(requireContext(), true)
         refreshTraceOnce()
     }
 
     override fun onPause() {
-        // Revenir à l'intervalle choisi en arrière-plan
         setServiceForeground(requireContext(), false)
         mapView.onPause()
         super.onPause()
     }
 
     override fun onStop() {
-        // Stoppe fused updates
         stopFusedUpdates()
-
-        // Désenregistre proprement le receiver
         if (receiverRegistered) {
             requireContext().unregisterReceiver(traceReceiver)
             receiverRegistered = false
