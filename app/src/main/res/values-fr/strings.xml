@@ -14,4 +14,41 @@
     <string name="notif_status_fmt">%1$d m / %2$d m</string>
     <string name="alarm_outside_fmt">Hors du rayon de sécurité (%1$d m)</string>
     <string name="status">Status</string>
+    <string name="service_running">Surveillance en cours</string>
+    <string name="interval_applied">Intervalle %1$ds appliqué</string>
+    <string name="muted_for_2min">Alarme en sourdine 2 min</string>
+    <string name="back_in_zone">De retour en zone</string>
+    <string name="mute">Silence</string>
+    <string name="interval_fmt">MAJ: %1$ds</string>
+    <string name="missing_location_permission">Autorisation de localisation manquante</string>
+    <string name="circle_radius_fmt">Rayon du cercle : %1$d m</string>
+
+
+    <!-- Intervalle de mise à jour -->
+    <string name="update_interval">Intervalle de mise à jour</string>
+    <string name="update_interval_seconds">Mise à jour toutes les %1$d secondes</string>
+    <string name="update_interval_minutes">Mise à jour toutes les %1$d minutes</string>
+
+    <!-- Contrôle de l'alarme -->
+    <string name="stop_alarm">Arrêter l\'alarme</string>
+    <string name="alarm_active">Alarme active!</string>
+
+    <!-- Historique des déplacements -->
+    <string name="track_history">Suivre les déplacements du bateau</string>
+    <string name="clear_history">Effacer l\'historique</string>
+    <string name="history_cleared">Historique effacé</string>
+
+    <!-- Marqueur GPS -->
+    <string name="show_my_position">Afficher ma position</string>
+    <string name="hide_my_position">Masquer ma position</string>
+
+    <!-- Paramètres de secteur et cercle -->
+    <string name="sector_settings">Paramètres de secteur</string>
+    <string name="no_sector">Cercle complet (sans secteur)</string>
+    <string name="sector_angle">Angle du secteur</string>
+    <string name="sector_bearing">Cap du secteur</string>
+    <string name="circle_radius">Rayon du cercle</string>
+    <string name="inner_circle_radius">Rayon du cercle intérieur</string>
+    <string name="outer_circle_radius">Rayon du cercle extérieur</string>
+    <string name="apply_sector">Appliquer le secteur</string>
 </resources>

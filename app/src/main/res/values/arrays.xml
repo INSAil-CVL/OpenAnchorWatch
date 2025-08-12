@@ -1,0 +1,30 @@
+<resources>
+    <!-- Cap / bearing en degrés -->
+    <string-array name="bearing_values">
+        <item>0</item>
+        <item>45</item>
+        <item>90</item>
+        <item>135</item>
+        <item>180</item>
+        <item>225</item>
+        <item>270</item>
+        <item>315</item>
+    </string-array>
+
+    <!-- Angle de secteur -->
+    <string-array name="angle_values">
+        <item>45</item>
+        <item>90</item>
+        <item>135</item>
+        <item>180</item>
+    </string-array>
+
+    <!-- Inner radius -->
+    <string-array name="inner_radius_values">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+    </string-array>
+
+</resources>

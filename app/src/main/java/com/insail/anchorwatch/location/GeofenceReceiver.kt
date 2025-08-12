@@ -15,7 +15,10 @@ class GeofenceReceiver : BroadcastReceiver() {
         if (event.geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT || event.geofenceTransition == Geofence.GEOFENCE_TRANSITION_DWELL) {
             AlertHelper.soundAlarm(context)
             AlertHelper.vibrate(context)
-            NotificationHelper.manager(context).notify(103, NotificationHelper.headsUp(context, "Anchor dragging / outside zone"))
+            NotificationHelper.ensureChannels(context)
+            NotificationHelper.manager(context)
+                .notify(103, NotificationHelper.headsUpWithActions(context, "Anchor dragging / outside zone"))
+
         }
     }
 }

@@ -14,4 +14,41 @@
     <string name="notif_status_fmt">%1$d m / %2$d m</string>
     <string name="alarm_outside_fmt">Outside safe radius (%1$d m)</string>
     <string name="status">Status</string>
+    <string name="service_running">Monitoring in progress</string>
+    <string name="interval_applied">%1$ds interval applied</string>
+    <string name="muted_for_2min">Alarm muted for 2 min</string>
+    <string name="back_in_zone">Back in zone</string>
+    <string name="mute">Mute</string>
+    <string name="interval_fmt">Update: %1$ds</string>
+    <string name="missing_location_permission">Missing location permission</string>
+    <string name="circle_radius_fmt">Circle radius: %1$d m</string>
+
+
+    <!-- Update interval -->
+    <string name="update_interval">Update interval</string>
+    <string name="update_interval_seconds">Update every %1$d seconds</string>
+    <string name="update_interval_minutes">Update every %1$d minutes</string>
+
+    <!-- Alarm controls -->
+    <string name="stop_alarm">Stop Alarm</string>
+    <string name="alarm_active">Alarm Active!</string>
+
+    <!-- Track history -->
+    <string name="track_history">Track boat movements</string>
+    <string name="clear_history">Clear history</string>
+    <string name="history_cleared">History cleared</string>
+
+    <!-- GPS marker -->
+    <string name="show_my_position">Show my position</string>
+    <string name="hide_my_position">Hide my position</string>
+
+    <!-- Sector and circle selection -->
+    <string name="sector_settings">Sector settings</string>
+    <string name="no_sector">Full circle (no sector)</string>
+    <string name="sector_angle">Sector angle</string>
+    <string name="sector_bearing">Sector bearing</string>
+    <string name="circle_radius">Circle radius</string>
+    <string name="inner_circle_radius">Inner circle radius</string>
+    <string name="outer_circle_radius">Outer circle radius</string>
+    <string name="apply_sector">Apply sector</string>
 </resources>
