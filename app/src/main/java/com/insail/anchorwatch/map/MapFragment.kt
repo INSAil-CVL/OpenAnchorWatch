@@ -124,6 +124,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         private const val SRC_CIRCLE = "guard-circle-src"
         private const val LYR_CIRCLE_FILL = "guard-circle-fill"
         private const val LYR_CIRCLE_LINE = "guard-circle-line"
+        private const val LYR_SECTOR = "sector-fill"
 
         private const val SRC_SECTOR = "sector-src"
 
@@ -412,6 +413,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     PropertyFactory.lineCap("round")
                 ),
                 LYR_CIRCLE_LINE
+            )
+            // Couche de remplissage pour le secteur (affiche la "part de tarte")
+            style.addLayerAbove(
+                FillLayer(LYR_SECTOR, SRC_SECTOR).withProperties(
+                    PropertyFactory.fillColor("#FF8800"),   // couleur du secteur
+                    PropertyFactory.fillOpacity(0.25f)      // transparence
+                ),
+                LYR_CIRCLE_FILL // au-dessus du remplissage du cercle
             )
             style.addLayerAbove(
                 CircleLayer(LYR_ME, SRC_ME).withProperties(
